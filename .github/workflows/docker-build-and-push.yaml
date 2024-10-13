@@ -1,0 +1,26 @@
+name: Savvy Homework
+
+on: workflow_dispatch
+
+env:
+  APP_NAME: savvy-node-app
+
+permissions:
+  contents: write
+
+jobs:
+  build-node:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./node
+        run: npm ci
