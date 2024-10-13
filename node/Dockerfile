@@ -1,0 +1,9 @@
+FROM node:18-alpine
+WORKDIR /app
+ARG IPGEOLOCATION_API_KEY
+ENV IPGEOLOCATION_API_KEY=${IPGEOLOCATION_API_KEY}
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "app.js"]
