@@ -18,7 +18,7 @@
         document.getElementById('ipForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             const ip = document.getElementById('ip').value;
-            const response = await fetch(`/endpoint?ip=${ip}`);
+            const response = await fetch(`https://itbeyder.github.io/savvy/endpoint?ip=${ip}`);
             const result = await response.text();
             document.getElementById('result').innerHTML = result;
         });
