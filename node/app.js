@@ -1,8 +1,11 @@
 const express = require('express');
 const axios = require('axios');
+const path = require('path');
 
 const app = express();
-// const ipgeolocation_api_key = 'da3d3da449a348b0a9bcb3ad6e3d9466';
+
+// Serve static files from the root directory
+app.use(express.static(path.join(__dirname, '../')));
 
 app.get('/endpoint', async (req, res) => {
     const ipaddr = req.query.ip;
@@ -15,7 +18,10 @@ app.get('/endpoint', async (req, res) => {
         const response = await axios.get(ipgeolocation_url);
         const timezone = response.data.timezone;
         if (timezone) {
-            res.send(timezone);
+            res.send(`
+                <p>IP Address: ${ipaddr}</p>
+                <p>Timezone: ${timezone}</p>
+            `);
         } else {
             res.status(404).send('Timezone not found');
         }

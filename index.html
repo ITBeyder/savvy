@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Timezone Finder</title>
+</head>
+<body>
+    <h1>IP Timezone Finder</h1>
+    <form id="ipForm">
+        <label for="ip">Enter IP Address:</label>
+        <input type="text" id="ip" name="ip" required>
+        <button type="submit">Get Timezone</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('ipForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const ip = document.getElementById('ip').value;
+            const response = await fetch(`/endpoint?ip=${ip}`);
+            const result = await response.text();
+            document.getElementById('result').innerHTML = result;
+        });
+    </script>
+</body>
+</html>
