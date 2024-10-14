@@ -75,15 +75,21 @@ jobs:
       # - name: Set up Helm
       #   run: |
       #     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-      # - name: Helm upgrade
-      #   run: |
-      #     helm upgrade --install \
-      #       --namespace savvy-${{ github.event.inputs.environment }} \
-      #       --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
-      #       --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
-      #       savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
+      
+      - name: Debug environment variables
+        run: |
+          echo "APP_NAME=${{ env.APP_NAME }}"
+          echo "VERSION=${{ env.VERSION }}"
+          echo "ENVIRONMENT=${{ github.event.inputs.environment }}"
 
       - name: Helm upgrade
         run: |
-          helm upgrade --install --namespace savvy-prod --values ./kubernetes/savvy-charts/envs/prod.yaml --set image.repository=itaybeyder/savvy-node-app:8 savvy-prod ./kubernetes/savvy-charts
+          helm upgrade --install \
+            --namespace savvy-${{ github.event.inputs.environment }} \
+            --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
+            savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
+
+      # - name: Helm upgrade
+      #   run: |
+      #     helm upgrade --install --namespace savvy-prod --values ./kubernetes/savvy-charts/envs/prod.yaml --set image.repository=itaybeyder/savvy-node-app:8 savvy-prod ./kubernetes/savvy-charts
