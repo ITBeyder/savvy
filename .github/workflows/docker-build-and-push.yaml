@@ -52,10 +52,14 @@ jobs:
 
       - name: Set up version
         id: version
-        run: echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
+        run: |
+          echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
+          export VERSION=${{ github.run_number }}  # This is for the current job
 
       - name: Build Docker image
         working-directory: ./node
+        env:
+          VERSION: ${{ github.run_number }}  # Ensuring VERSION is available
         run: |
           docker build \
             --build-arg IPGEOLOCATION_API_KEY=${{ secrets.IPGEOLOCATION_API_KEY }} \
@@ -63,16 +67,21 @@ jobs:
 
       - name: Push Docker image
         working-directory: ./node
+        env:
+          VERSION: ${{ github.run_number }}  # Ensuring VERSION is available
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }}
 
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Debug environment variables
+        env:
+          VERSION: ${{ github.run_number }}  # Make sure VERSION is available here
         run: |
           echo "APP_NAME=${{ env.APP_NAME }}"
           echo "VERSION=${{ env.VERSION }}"
@@ -80,7 +89,7 @@ jobs:
 
       - name: Helm upgrade
         env:
-          VERSION: ${{ github.run_number }}  # Pass the VERSION here as well
+          VERSION: ${{ github.run_number }}  # Ensure VERSION is passed into the helm command
         run: |
           helm upgrade --install \
             --namespace savvy-${{ github.event.inputs.environment }} \
