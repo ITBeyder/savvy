@@ -1,3 +1,24 @@
+name: Savvy Homework
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Choose the deployment environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+env:
+  APP_NAME: savvy-node-app
+
+permissions:
+  contents: write
+
 jobs:
   build-node:
     runs-on: self-hosted
@@ -59,7 +80,7 @@ jobs:
 
       - name: Helm upgrade
         env:
-          VERSION: ${{ github.run_number }}
+          VERSION: ${{ github.run_number }}  # Pass the VERSION here as well
         run: |
           helm upgrade --install \
             --namespace savvy-${{ github.event.inputs.environment }} \
