@@ -52,7 +52,9 @@ jobs:
 
       - name: Set up version
         id: version
-        run: echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
+        run: |
+          echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
+          export VERSION=${{ github.run_number }}
 
       - name: Build Docker image
         working-directory: ./node
@@ -75,13 +77,13 @@ jobs:
       # - name: Set up Helm
       #   run: |
       #     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-      
+
       - name: Debug environment variables
         run: |
           echo "APP_NAME=${{ env.APP_NAME }}"
           echo "VERSION=${{ env.VERSION }}"
           echo "ENVIRONMENT=${{ github.event.inputs.environment }}"
-
+          
       - name: Helm upgrade
         run: |
           helm upgrade --install \
