@@ -15,10 +15,20 @@ on:
           - dev
           - test
           - prod
+      action:
+        description: "Select the action to run"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - build
+          - build-and-docker
+          - full
 
 env:
   APP_NAME: savvy-node-app
-  DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'test' }}
+  DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev' }}
+  ACTION: ${{ github.event.inputs.action }}
 
 permissions:
   contents: write
@@ -26,6 +36,7 @@ permissions:
 jobs:
   build-node:
     runs-on: self-hosted
+    if: ${{ env.ACTION == 'build' || env.ACTION == 'build-and-docker' || env.ACTION == 'full' }}
 
     steps:
       - name: Checkout repository
@@ -43,6 +54,7 @@ jobs:
   build-and-push-docker:
     runs-on: self-hosted
     needs: build-node
+    if: ${{ env.ACTION == 'build-and-docker' || env.ACTION == 'full' }}
 
     steps:
       - name: Checkout repository
@@ -78,6 +90,7 @@ jobs:
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
+    if: ${{ env.ACTION == 'full' }}
 
     steps:
       - name: Checkout repository
