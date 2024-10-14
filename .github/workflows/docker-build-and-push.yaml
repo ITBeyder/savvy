@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   build-node:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
   build-and-push-docker:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-node
 
     steps:
@@ -65,7 +65,7 @@ jobs:
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }}
 
   helm-upgrade:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-push-docker
     environment:
       name: ${{ github.event.inputs.environment }}
