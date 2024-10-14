@@ -12,6 +12,11 @@ on:
           - dev
           - test
           - prod
+# on:
+#   push:
+#     branches:
+#       - main
+
 
 env:
   APP_NAME: savvy-node-app
