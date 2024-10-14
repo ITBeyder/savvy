@@ -1,24 +1,3 @@
-name: Savvy Homework
-
-on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Choose the deployment environment"
-        required: true
-        default: "dev"
-        type: choice
-        options:
-          - dev
-          - test
-          - prod
-
-env:
-  APP_NAME: savvy-node-app
-
-permissions:
-  contents: write
-
 jobs:
   build-node:
     runs-on: self-hosted
@@ -52,9 +31,7 @@ jobs:
 
       - name: Set up version
         id: version
-        run: |
-          echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
-          export VERSION=${{ github.run_number }}
+        run: echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Build Docker image
         working-directory: ./node
@@ -74,24 +51,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # - name: Set up Helm
-      #   run: |
-      #     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
       - name: Debug environment variables
         run: |
           echo "APP_NAME=${{ env.APP_NAME }}"
           echo "VERSION=${{ env.VERSION }}"
           echo "ENVIRONMENT=${{ github.event.inputs.environment }}"
-          
+
       - name: Helm upgrade
+        env:
+          VERSION: ${{ github.run_number }}
         run: |
           helm upgrade --install \
             --namespace savvy-${{ github.event.inputs.environment }} \
             --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
             savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
-
-      # - name: Helm upgrade
-      #   run: |
-      #     helm upgrade --install --namespace savvy-prod --values ./kubernetes/savvy-charts/envs/prod.yaml --set image.repository=itaybeyder/savvy-node-app:8 savvy-prod ./kubernetes/savvy-charts
