@@ -79,7 +79,7 @@ jobs:
       - name: Helm upgrade
         run: |
           helm upgrade --install \
-            --namespace ${{ github.event.inputs.environment }} \
+            --namespace savvy-${{ github.event.inputs.environment }} \
             --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
             savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
