@@ -46,6 +46,13 @@ spec:
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+
+          # Add liveness and readiness probes
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
