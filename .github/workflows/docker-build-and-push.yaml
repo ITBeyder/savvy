@@ -27,8 +27,6 @@ on:
 
 env:
   APP_NAME: savvy-node-app
-  DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev' }}
-  ACTION: ${{ github.event.inputs.action }}
 
 permissions:
   contents: write
@@ -36,7 +34,9 @@ permissions:
 jobs:
   build-node:
     runs-on: self-hosted
-    if: ${{ env.ACTION == 'build' || env.ACTION == 'build-and-docker' || env.ACTION == 'full' }}
+    env:
+      ACTION: ${{ github.event.inputs.action }}
+    if: ${{ github.event.inputs.action == 'build' || github.event.inputs.action == 'build-and-docker' || github.event.inputs.action == 'full' }}
 
     steps:
       - name: Checkout repository
@@ -54,7 +54,9 @@ jobs:
   build-and-push-docker:
     runs-on: self-hosted
     needs: build-node
-    if: ${{ env.ACTION == 'build-and-docker' || env.ACTION == 'full' }}
+    env:
+      ACTION: ${{ github.event.inputs.action }}
+    if: ${{ github.event.inputs.action == 'build-and-docker' || github.event.inputs.action == 'full' }}
 
     steps:
       - name: Checkout repository
@@ -70,7 +72,6 @@ jobs:
         id: version
         run: |
           echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
-          export VERSION=${{ github.run_number }}  # This is for the current job
 
       - name: Build Docker image
         working-directory: ./node
@@ -90,7 +91,9 @@ jobs:
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
-    if: ${{ env.ACTION == 'full' }}
+    env:
+      ACTION: ${{ github.event.inputs.action }}
+    if: ${{ github.event.inputs.action == 'full' }}
 
     steps:
       - name: Checkout repository
@@ -101,15 +104,15 @@ jobs:
           VERSION: ${{ github.run_number }}
         run: |
           echo "APP_NAME=${{ env.APP_NAME }}"
-          echo "VERSION=${{ env.VERSION }}"
-          echo "ENVIRONMENT=${{ env.DEPLOY_ENVIRONMENT }}"
+          echo "VERSION=${{ github.run_number }}"
+          echo "ENVIRONMENT=${{ github.event.inputs.environment }}"
 
       - name: Helm upgrade
         env:
           VERSION: ${{ github.run_number }}
         run: |
           helm upgrade --install \
-            --namespace savvy-${{ env.DEPLOY_ENVIRONMENT }} \
-            --values ./kubernetes/savvy-charts/envs/${{ env.DEPLOY_ENVIRONMENT }}.yaml \
-            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
-            savvy-${{ env.DEPLOY_ENVIRONMENT }} ./kubernetes/savvy-charts
+            --namespace savvy-${{ github.event.inputs.environment }} \
+            --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ VERSION }} \
+            savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
