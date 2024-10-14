@@ -18,6 +18,7 @@ on:
 
 env:
   APP_NAME: savvy-node-app
+  DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'test' }}
 
 permissions:
   contents: write
@@ -62,7 +63,7 @@ jobs:
       - name: Build Docker image
         working-directory: ./node
         env:
-          VERSION: ${{ github.run_number }}  # Ensuring VERSION is available
+          VERSION: ${{ github.run_number }}
         run: |
           docker build \
             --build-arg IPGEOLOCATION_API_KEY=${{ secrets.IPGEOLOCATION_API_KEY }} \
@@ -71,7 +72,7 @@ jobs:
       - name: Push Docker image
         working-directory: ./node
         env:
-          VERSION: ${{ github.run_number }}  # Ensuring VERSION is available
+          VERSION: ${{ github.run_number }}
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }}
 
   helm-upgrade:
@@ -84,18 +85,18 @@ jobs:
 
       - name: Debug environment variables
         env:
-          VERSION: ${{ github.run_number }}  # Make sure VERSION is available here
+          VERSION: ${{ github.run_number }}
         run: |
           echo "APP_NAME=${{ env.APP_NAME }}"
           echo "VERSION=${{ env.VERSION }}"
-          echo "ENVIRONMENT=${{ github.event.inputs.environment }}"
+          echo "ENVIRONMENT=${{ env.DEPLOY_ENVIRONMENT }}"
 
       - name: Helm upgrade
         env:
-          VERSION: ${{ github.run_number }}  # Ensure VERSION is passed into the helm command
+          VERSION: ${{ github.run_number }}
         run: |
           helm upgrade --install \
-            --namespace savvy-${{ github.event.inputs.environment }} \
-            --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
+            --namespace savvy-${{ env.DEPLOY_ENVIRONMENT }} \
+            --values ./kubernetes/savvy-charts/envs/${{ env.DEPLOY_ENVIRONMENT }}.yaml \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
-            savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
+            savvy-${{ env.DEPLOY_ENVIRONMENT }} ./kubernetes/savvy-charts
