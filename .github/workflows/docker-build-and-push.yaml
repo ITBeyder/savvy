@@ -28,7 +28,6 @@ on:
 env:
   APP_NAME: savvy-node-app
   DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'test' }}
-  PIPELINE_TYPE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.pipeline_type || 'full' }}
 
 permissions:
   contents: write
@@ -36,7 +35,7 @@ permissions:
 jobs:
   build-node:
     runs-on: self-hosted
-    if: ${{ env.PIPELINE_TYPE == 'full' || env.PIPELINE_TYPE == 'build-only' || env.PIPELINE_TYPE == 'build-and-docker' }}
+    if: ${{ github.event.inputs.pipeline_type == 'full' || github.event.inputs.pipeline_type == 'build-only' || github.event.inputs.pipeline_type == 'build-and-docker' }}
 
     steps:
       - name: Checkout repository
@@ -54,7 +53,7 @@ jobs:
   build-and-push-docker:
     runs-on: self-hosted
     needs: build-node
-    if: ${{ env.PIPELINE_TYPE == 'full' || env.PIPELINE_TYPE == 'build-and-docker' }}
+    if: ${{ github.event.inputs.pipeline_type == 'full' || github.event.inputs.pipeline_type == 'build-and-docker' }}
 
     steps:
       - name: Checkout repository
@@ -90,7 +89,7 @@ jobs:
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
-    if: ${{ env.PIPELINE_TYPE == 'full' }}
+    if: ${{ github.event.inputs.pipeline_type == 'full' }}
 
     steps:
       - name: Checkout repository
