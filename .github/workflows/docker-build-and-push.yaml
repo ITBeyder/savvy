@@ -15,18 +15,10 @@ on:
           - dev
           - test
           - prod
-      action:
-        description: "Select the action to run"
-        required: true
-        default: "full"
-        type: choice
-        options:
-          - build
-          - build-and-docker
-          - full
 
 env:
   APP_NAME: savvy-node-app
+  DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'test' }}
 
 permissions:
   contents: write
@@ -34,7 +26,6 @@ permissions:
 jobs:
   build-node:
     runs-on: self-hosted
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build-and-docker' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'full' || github.event_name == 'push' }} 
 
     steps:
       - name: Checkout repository
@@ -52,7 +43,6 @@ jobs:
   build-and-push-docker:
     runs-on: self-hosted
     needs: build-node
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build-and-docker' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'full' || github.event_name == 'push' }}
 
     steps:
       - name: Checkout repository
@@ -68,37 +58,45 @@ jobs:
         id: version
         run: |
           echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
+          export VERSION=${{ github.run_number }}  # This is for the current job
 
       - name: Build Docker image
         working-directory: ./node
+        env:
+          VERSION: ${{ github.run_number }}
         run: |
           docker build \
             --build-arg IPGEOLOCATION_API_KEY=${{ secrets.IPGEOLOCATION_API_KEY }} \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.run_number }} .
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} .
 
       - name: Push Docker image
         working-directory: ./node
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.run_number }}
+        env:
+          VERSION: ${{ github.run_number }}
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }}
 
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'full' || github.event_name == 'push' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Debug environment variables
+        env:
+          VERSION: ${{ github.run_number }}
         run: |
           echo "APP_NAME=${{ env.APP_NAME }}"
-          echo "VERSION=${{ github.run_number }}"
-          echo "ENVIRONMENT=${{ github.event.inputs.environment }}"
+          echo "VERSION=${{ env.VERSION }}"
+          echo "ENVIRONMENT=${{ env.DEPLOY_ENVIRONMENT }}"
 
       - name: Helm upgrade
+        env:
+          VERSION: ${{ github.run_number }}
         run: |
           helm upgrade --install \
-            --namespace savvy-${{ github.event.inputs.environment }} \
-            --values ./kubernetes/savvy-charts/envs/${{ github.event.inputs.environment }}.yaml \
-            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.run.number }} \
-            savvy-${{ github.event.inputs.environment }} ./kubernetes/savvy-charts
+            --namespace savvy-${{ env.DEPLOY_ENVIRONMENT }} \
+            --values ./kubernetes/savvy-charts/envs/${{ env.DEPLOY_ENVIRONMENT }}.yaml \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:${{ env.VERSION }} \
+            savvy-${{ env.DEPLOY_ENVIRONMENT }} ./kubernetes/savvy-charts
