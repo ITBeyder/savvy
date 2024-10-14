@@ -1,16 +1,17 @@
 name: Savvy Homework
 
-on: workflow_dispatch
-# Optional: Add input parameters for environment selection
-inputs:
-  environment:
-    description: "Choose the deployment environment"
-    required: true
-    default: "dev"
-    options:
-      - dev
-      - test
-      - prod
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Choose the deployment environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
 
 env:
   APP_NAME: savvy-node-app
@@ -67,9 +68,6 @@ jobs:
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
-    environment:
-      name: ${{ github.event.inputs.environment }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
