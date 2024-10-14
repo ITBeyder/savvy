@@ -1,9 +1,1 @@
-helm upgrade --namespace <NAMESPACE> --install --values ./<APPLICATION>-chart/envs/<ENV>.yaml --set spec.template.spec.containers.imageName=atcscsmseastus2crqaxoqcql.azurecr.io/csms-api:1.2.703-SMIJuneReleaseBranch csms-api ./csms-api-chart
-
-
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=yourdomain.com/O=yourorganization"
-kubectl create secret tls tls-secret --cert=tls.crt --key=tls.key
-curl -k https://yourdomain.com
-
-
-helm upgrade --values ./kubernetes/savvy-charts/envs/test.yaml --install --namespace savvy-test --set 
+helm upgrade --install --namespace savvy-dev --values ./kubernetes/savvy-charts/envs/dev.yaml --set image.repository=itaybeyder/savvy-node-app:8 savvy-dev ./kubernetes/savvy-charts
