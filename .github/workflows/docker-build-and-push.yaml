@@ -34,7 +34,7 @@ permissions:
 jobs:
   build-node:
     runs-on: self-hosted
-    if: ${{ github.event.inputs.action == 'build' || github.event.inputs.action == 'build-and-docker' || github.event.inputs.action == 'full' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build-and-docker' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'full' || github.event_name == 'push' }} 
 
     steps:
       - name: Checkout repository
@@ -52,7 +52,7 @@ jobs:
   build-and-push-docker:
     runs-on: self-hosted
     needs: build-node
-    if: ${{ github.event.inputs.action == 'build-and-docker' || github.event.inputs.action == 'full' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'build-and-docker' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'full' || github.event_name == 'push' }}
 
     steps:
       - name: Checkout repository
@@ -83,7 +83,7 @@ jobs:
   helm-upgrade:
     runs-on: self-hosted
     needs: build-and-push-docker
-    if: ${{ github.event.inputs.action == 'full' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'full' || github.event_name == 'push' }}
 
     steps:
       - name: Checkout repository
